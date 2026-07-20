@@ -4,4 +4,5 @@ sealed class AppScreen {
     data object Onboarding : AppScreen()
     data object PinVerify : AppScreen()
     data object Dashboard : AppScreen()
+    data object Send : AppScreen()
 }

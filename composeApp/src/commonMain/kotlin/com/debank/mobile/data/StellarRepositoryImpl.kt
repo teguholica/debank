@@ -7,6 +7,7 @@ import com.soneso.stellar.sdk.Account
 import com.soneso.stellar.sdk.horizon.HorizonServer
 import com.soneso.stellar.sdk.AssetTypeCreditAlphaNum4
 import com.soneso.stellar.sdk.ChangeTrustOperation
+import com.soneso.stellar.sdk.PaymentOperation
 import com.debank.mobile.domain.AccountBalance
 import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
@@ -47,6 +48,23 @@ class StellarRepositoryImpl(
             assetCode = assetCode,
             balance = balance?.balance ?: "0.0000000"
         )
+    }
+
+    override suspend fun sendPayment(keyPair: KeyPairData, destination: String, amount: String, assetId: AssetId): String = withContext(Dispatchers.Default) {
+        val kp = KeyPair.fromSecretSeed(keyPair.secretSeed.toCharArray())
+        val accountResponse = server.accounts().account(keyPair.publicKey)
+        val sourceAccount = Account(kp, accountResponse.sequenceNumber)
+
+        val transaction = TransactionBuilder(sourceAccount, Network.TESTNET)
+            .setBaseFee(100)
+            .addOperation(
+                PaymentOperation(destination, AssetTypeCreditAlphaNum4(assetId.code, assetId.issuerPublicKey), amount)
+            )
+            .build()
+
+        transaction.sign(kp)
+        val response = server.submitTransaction(transaction.toEnvelopeXdrBase64())
+        response.hash
     }
 
     override suspend fun addTrustline(keyPair: KeyPairData, assetId: AssetId): String = withContext(Dispatchers.Default) {

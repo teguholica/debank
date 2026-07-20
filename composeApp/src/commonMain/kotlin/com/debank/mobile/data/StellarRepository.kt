@@ -9,4 +9,5 @@ interface StellarRepository {
     suspend fun fundTestnetAccount(publicKey: String): String
     suspend fun getAccountBalance(publicKey: String, assetCode: String): AccountBalance
     suspend fun addTrustline(keyPair: KeyPairData, assetId: AssetId): String
+    suspend fun sendPayment(keyPair: KeyPairData, destination: String, amount: String, assetId: AssetId): String
 }

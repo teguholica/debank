@@ -64,6 +64,42 @@ class StellarRepositoryTest {
     }
 
     @Test
+    fun `sendPayment returns transaction hash`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val keyPair = KeyPairData("GABC123", "SABC123")
+        val assetId = AssetId("IDR", "GISSUER")
+
+        val result = stub.sendPayment(keyPair, "GDEST", "50.5000000", assetId)
+
+        assertEquals("tx-hash-send", result)
+    }
+
+    @Test
+    fun `sendPayment records payment params`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val keyPair = KeyPairData("GABC123", "SABC123")
+        val assetId = AssetId("IDR", "GISSUER")
+
+        stub.sendPayment(keyPair, "GDEST", "50.5000000", assetId)
+
+        val payment = stub.lastPayment
+        assertEquals("GDEST", payment?.destination)
+        assertEquals("50.5000000", payment?.amount)
+        assertEquals(assetId, payment?.assetId)
+    }
+
+    @Test
+    fun `sendPayment uses correct keypair`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val keyPair = KeyPairData("GABC123", "SABC123")
+        val assetId = AssetId("IDR", "GISSUER")
+
+        stub.sendPayment(keyPair, "GDEST", "50.5000000", assetId)
+
+        assertEquals(keyPair, stub.lastPayment?.keyPair)
+    }
+
+    @Test
     fun `toString hides secret seed`() {
         val kp = KeyPairData("GABC", "SECRET123")
         val str = kp.toString()

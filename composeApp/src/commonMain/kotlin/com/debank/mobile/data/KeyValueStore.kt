@@ -8,5 +8,7 @@ interface KeyValueStore {
 
     companion object {
         const val PIN_HASH_KEY = "pin_hash"
+        const val PUBLIC_KEY_KEY = "public_key"
+        const val SECRET_SEED_KEY = "secret_seed"
     }
 }

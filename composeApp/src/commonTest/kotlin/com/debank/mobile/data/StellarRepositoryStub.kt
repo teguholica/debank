@@ -9,10 +9,13 @@ class StellarRepositoryStub : StellarRepository {
     private var fundResult = ""
     private var balanceToReturn = AccountBalance("IDR", "0.0000000")
     private var lastTrustline: AssetId? = null
+    var lastPayment: PaymentData? = null
+    private var paymentResult = "tx-hash-send"
 
     fun setKeyPair(kp: KeyPairData) { keyPairToReturn = kp }
     fun setFundResult(hash: String) { fundResult = hash }
     fun setBalance(balance: AccountBalance) { balanceToReturn = balance }
+    fun setPaymentResult(hash: String) { paymentResult = hash }
     fun lastTrustlineAsset() = lastTrustline
 
     override suspend fun createKeyPair(): KeyPairData = keyPairToReturn
@@ -25,4 +28,16 @@ class StellarRepositoryStub : StellarRepository {
         lastTrustline = assetId
         return "tx-hash-${assetId.code}"
     }
+
+    override suspend fun sendPayment(keyPair: KeyPairData, destination: String, amount: String, assetId: AssetId): String {
+        lastPayment = PaymentData(keyPair, destination, amount, assetId)
+        return paymentResult
+    }
+
+    data class PaymentData(
+        val keyPair: KeyPairData,
+        val destination: String,
+        val amount: String,
+        val assetId: AssetId
+    )
 }
