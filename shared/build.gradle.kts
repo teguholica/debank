@@ -1,12 +1,19 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.debank.mobile.shared"
+        compileSdk = 36
+
+        androidResources {
+            enable = true
+        }
+
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
@@ -43,8 +50,13 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            // ponytail: activity-compose, CameraX + MLKit tetap di shared
+            // karena QrScannerView (expect/actual) butuh
+            // rememberLauncherForActivityResult, CameraX, MLKit.
+            // actual harus same module dgn expect — refactor ke
+            // interface/parameter pattern ketika ada tiket khusus.
+            implementation(libs.activity.compose)
             implementation(libs.camerax.camera2)
             implementation(libs.camerax.lifecycle)
             implementation(libs.camerax.view)
@@ -53,34 +65,6 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
-        }
-    }
-}
-
-android {
-    namespace = "com.debank.mobile"
-    compileSdk = 36
-
-    defaultConfig {
-        applicationId = "com.debank.mobile"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
 }
