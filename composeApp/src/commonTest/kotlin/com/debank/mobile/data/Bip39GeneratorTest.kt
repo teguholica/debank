@@ -59,7 +59,7 @@ class Bip39GeneratorTest {
         val phrase = generator.generate()
         val challenges = generator.createChallenges(phrase, count = 3)
         val answers = challenges.associate { it.index to it.correctWord }
-        assertTrue(generator.verify(challenges, answers))
+            assertTrue(Bip39Generator.verify(challenges, answers))
     }
 
     @Test
@@ -68,7 +68,7 @@ class Bip39GeneratorTest {
         val challenges = generator.createChallenges(phrase, count = 1)
         val wrongWord = wordlist.first { it != challenges[0].correctWord }
         val wrongAnswers = mapOf(challenges[0].index to wrongWord)
-        assertFalse(generator.verify(challenges, wrongAnswers))
+            assertFalse(Bip39Generator.verify(challenges, wrongAnswers))
     }
 
     @Test

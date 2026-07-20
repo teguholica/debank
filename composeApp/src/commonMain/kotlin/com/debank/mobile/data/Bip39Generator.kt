@@ -1,10 +1,6 @@
 package com.debank.mobile.data
 
-data class Bip39Challenge(
-    val index: Int,
-    val correctWord: String,
-    val options: List<String>
-)
+import com.debank.mobile.domain.Bip39Challenge
 
 class Bip39Generator {
 
@@ -44,7 +40,9 @@ class Bip39Generator {
         }
     }
 
-    fun verify(challenges: List<Bip39Challenge>, answers: Map<Int, String>): Boolean {
-        return challenges.all { answers[it.index] == it.correctWord }
+    companion object {
+        fun verify(challenges: List<Bip39Challenge>, answers: Map<Int, String>): Boolean {
+            return challenges.all { answers[it.index] == it.correctWord }
+        }
     }
 }

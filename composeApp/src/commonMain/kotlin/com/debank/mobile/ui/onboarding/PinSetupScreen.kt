@@ -47,52 +47,74 @@ fun PinSetupScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                if (!isConfirming) "Masukkan PIN 4-6 digit"
-                else "Masukkan PIN kembali"
-            )
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = if (!isConfirming) pin1 else pin2,
-                onValueChange = { value ->
-                    if (value.all { it.isDigit() } && value.length <= 6) {
-                        if (!isConfirming) pin1 = value else pin2 = value
-                        error = null
-                    }
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                label = { Text(if (!isConfirming) "PIN baru" else "Konfirmasi PIN") }
-            )
-
-            error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = {
-                    if (!isConfirming) {
+            if (!isConfirming) {
+                PinStep(
+                    title = "Masukkan PIN 4-6 digit",
+                    value = pin1,
+                    label = "PIN baru",
+                    buttonText = "Lanjut",
+                    error = error,
+                    onValueChange = { pin1 = it; error = null },
+                    onAction = {
                         if (pin1.length < 4) {
                             error = "PIN minimal 4 digit"
-                            return@Button
+                            return@PinStep
                         }
                         isConfirming = true
-                    } else {
+                    }
+                )
+            } else {
+                PinStep(
+                    title = "Masukkan PIN kembali",
+                    value = pin2,
+                    label = "Konfirmasi PIN",
+                    buttonText = "Simpan PIN",
+                    error = error,
+                    onValueChange = { pin2 = it; error = null },
+                    onAction = {
                         if (pin1 != pin2) {
                             error = "PIN tidak cocok"
                             pin2 = ""
-                            return@Button
+                            return@PinStep
                         }
                         val hash = PinManager.hash(pin1)
                         store.setString(KeyValueStore.PIN_HASH_KEY, hash)
                         onComplete()
                     }
-                }
-            ) {
-                Text(if (!isConfirming) "Lanjut" else "Simpan PIN")
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun PinStep(
+    title: String,
+    value: String,
+    label: String,
+    buttonText: String,
+    error: String?,
+    onValueChange: (String) -> Unit,
+    onAction: () -> Unit
+) {
+    Text(title)
+    Spacer(Modifier.height(16.dp))
+    OutlinedTextField(
+        value = value,
+        onValueChange = { v ->
+            if (v.all { it.isDigit() } && v.length <= 6) {
+                onValueChange(v)
+            }
+        },
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+        label = { Text(label) }
+    )
+    error?.let {
+        Text(it, color = MaterialTheme.colorScheme.error)
+    }
+    Spacer(Modifier.height(16.dp))
+    Button(onClick = onAction) {
+        Text(buttonText)
     }
 }

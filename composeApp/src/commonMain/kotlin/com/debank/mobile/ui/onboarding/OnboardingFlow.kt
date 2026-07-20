@@ -5,9 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.debank.mobile.data.Bip39Challenge
 import com.debank.mobile.data.Bip39Generator
 import com.debank.mobile.data.KeyValueStore
+import com.debank.mobile.domain.Bip39Challenge
 
 private sealed class OnboardingStep {
     data object GenerateSeed : OnboardingStep()

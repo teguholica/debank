@@ -21,8 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.debank.mobile.data.Bip39Challenge
 import com.debank.mobile.data.Bip39Generator
+import com.debank.mobile.domain.Bip39Challenge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +70,7 @@ fun ConfirmSeedScreen(
             Button(
                 onClick = {
                     if (answers.size < challenges.size) return@Button
-                    if (Bip39Generator().verify(challenges, answers)) {
+                    if (Bip39Generator.verify(challenges, answers)) {
                         onVerified()
                     } else {
                         showError = true
