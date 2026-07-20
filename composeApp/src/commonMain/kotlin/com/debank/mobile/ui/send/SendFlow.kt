@@ -53,10 +53,14 @@ fun SendFlow(
     publicKey: String,
     secretSeed: String,
     onBack: () -> Unit,
-    onSuccess: () -> Unit
+    onSuccess: () -> Unit,
+    prefilledAddress: String = ""
 ) {
-    var step by remember { mutableStateOf<SendStep>(SendStep.Input) }
-    var address by remember { mutableStateOf("") }
+    var step by remember { mutableStateOf(
+        if (prefilledAddress.isNotBlank()) SendStep.Confirm(prefilledAddress, "")
+        else SendStep.Input
+    ) }
+    var address by remember { mutableStateOf(prefilledAddress) }
     var amount by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
@@ -106,11 +110,12 @@ fun SendFlow(
 
                     OutlinedTextField(
                         value = address,
-                        onValueChange = { address = it; addressError = null },
+                        onValueChange = { if (prefilledAddress.isBlank()) { address = it; addressError = null } },
                         label = { Text("Alamat Stellar tujuan") },
                         placeholder = { Text("G...") },
                         modifier = Modifier.fillMaxWidth(),
                         isError = addressError != null,
+                        enabled = prefilledAddress.isBlank(),
                         singleLine = true
                     )
                     addressError?.let {

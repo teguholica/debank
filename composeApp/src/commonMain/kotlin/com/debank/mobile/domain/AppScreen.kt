@@ -4,5 +4,6 @@ sealed class AppScreen {
     data object Onboarding : AppScreen()
     data object PinVerify : AppScreen()
     data object Dashboard : AppScreen()
-    data object Send : AppScreen()
+    data class Send(val prefilledAddress: String = "") : AppScreen()
+    data object Receive : AppScreen()
 }

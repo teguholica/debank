@@ -37,6 +37,7 @@ fun DashboardScreen(
     repository: StellarRepository,
     publicKey: String,
     onSend: () -> Unit,
+    onReceive: () -> Unit,
     onLogout: () -> Unit
 ) {
     var balance by remember { mutableStateOf<AccountBalance?>(null) }
@@ -102,7 +103,16 @@ fun DashboardScreen(
                     Text("Kirim")
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onReceive,
+                    modifier = Modifier.fillMaxWidth(0.6f)
+                ) {
+                    Text("Terima")
+                }
+
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedButton(onClick = onLogout) {
                     Text("Logout / Reset")

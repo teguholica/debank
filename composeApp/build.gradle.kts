@@ -31,6 +31,7 @@ kotlin {
             implementation(libs.stellar.sdk)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.client.core)
+            implementation(libs.qrose)
         }
 
         commonTest.dependencies {
@@ -43,6 +44,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.camerax.camera2)
+            implementation(libs.camerax.lifecycle)
+            implementation(libs.camerax.view)
+            implementation(libs.mlkit.barcode.scanning)
         }
 
         iosMain.dependencies {

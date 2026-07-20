@@ -12,6 +12,7 @@ import com.debank.mobile.domain.AppScreen
 import com.debank.mobile.ui.dashboard.DashboardScreen
 import com.debank.mobile.ui.onboarding.OnboardingFlow
 import com.debank.mobile.ui.pin.PinVerifyScreen
+import com.debank.mobile.ui.receive.ReceiveScreen
 import com.debank.mobile.ui.send.SendFlow
 
 @Composable
@@ -24,7 +25,7 @@ fun App(store: KeyValueStore) {
         }
         var screen by remember { mutableStateOf(startScreen) }
 
-        when (screen) {
+        when (val currentScreen = screen) {
             AppScreen.Onboarding -> OnboardingFlow(
                 store = store,
                 repository = repository,
@@ -37,7 +38,8 @@ fun App(store: KeyValueStore) {
             AppScreen.Dashboard -> DashboardScreen(
                 repository = repository,
                 publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
-                onSend = { screen = AppScreen.Send },
+                onSend = { screen = AppScreen.Send() },
+                onReceive = { screen = AppScreen.Receive },
                 onLogout = {
                     store.remove(KeyValueStore.PIN_HASH_KEY)
                     store.remove(KeyValueStore.PUBLIC_KEY_KEY)
@@ -45,13 +47,21 @@ fun App(store: KeyValueStore) {
                     screen = AppScreen.Onboarding
                 }
             )
-            AppScreen.Send -> SendFlow(
+            is AppScreen.Send -> SendFlow(
                 store = store,
                 repository = repository,
                 publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
                 secretSeed = store.getString(KeyValueStore.SECRET_SEED_KEY) ?: "",
                 onBack = { screen = AppScreen.Dashboard },
-                onSuccess = { screen = AppScreen.Dashboard }
+                onSuccess = { screen = AppScreen.Dashboard },
+                prefilledAddress = currentScreen.prefilledAddress
+            )
+            AppScreen.Receive -> ReceiveScreen(
+                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
+                onScanResult = { address ->
+                    screen = AppScreen.Send(prefilledAddress = address)
+                },
+                onBack = { screen = AppScreen.Dashboard }
             )
         }
     }
