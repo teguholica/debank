@@ -113,39 +113,32 @@ private fun SettingsMenu(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Pengaturan") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            SettingsItem(
-                icon = Icons.Default.Key,
-                title = "Lihat Seed Phrase",
-                subtitle = "12 kata pemulihan wallet",
-                onClick = onShowSeedPhrase
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            SettingsItem(
-                icon = Icons.Default.Lock,
-                title = "Ganti PIN",
-                subtitle = "Ubah PIN 4-6 digit",
-                onClick = onChangePin
-            )
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            SettingsItem(
-                icon = Icons.Default.Logout,
-                title = "Logout / Reset",
-                subtitle = "Hapus semua data lokal",
-                titleColor = MaterialTheme.colorScheme.error,
-                onClick = { showLogoutConfirm = true }
-            )
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        SettingsItem(
+            icon = Icons.Default.Key,
+            title = "Lihat Seed Phrase",
+            subtitle = "12 kata pemulihan wallet",
+            onClick = onShowSeedPhrase
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        SettingsItem(
+            icon = Icons.Default.Lock,
+            title = "Ganti PIN",
+            subtitle = "Ubah PIN 4-6 digit",
+            onClick = onChangePin
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        SettingsItem(
+            icon = Icons.Default.Logout,
+            title = "Logout / Reset",
+            subtitle = "Hapus semua data lokal",
+            titleColor = MaterialTheme.colorScheme.error,
+            onClick = { showLogoutConfirm = true }
+        )
     }
 }
 

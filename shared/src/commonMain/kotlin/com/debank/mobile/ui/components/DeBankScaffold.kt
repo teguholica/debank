@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Home
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -32,9 +34,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
+import com.debank.mobile.domain.ContactListRoute
+import com.debank.mobile.domain.ContactPickerRoute
 import com.debank.mobile.domain.DashboardRoute
 import com.debank.mobile.domain.HistoryRoute
-import com.debank.mobile.domain.Route
+import com.debank.mobile.domain.ReceiveRoute
 import com.debank.mobile.domain.SendRoute
 import com.debank.mobile.domain.SettingsRoute
 
@@ -49,24 +53,48 @@ enum class BottomNavItem(
     Settings("Pengaturan", Icons.Default.Settings, SettingsRoute)
 }
 
+private fun NavKey.headerTitle(): String? = when (this) {
+    is SendRoute -> "Kirim IDR"
+    is ReceiveRoute -> "Terima IDR"
+    is HistoryRoute -> "Riwayat Transaksi"
+    is ContactListRoute -> "Kontak"
+    is ContactPickerRoute -> "Pilih Kontak"
+    is SettingsRoute -> "Pengaturan"
+    else -> null
+}
+
+private fun NavKey.showBackButton(): Boolean = this !is DashboardRoute &&
+        this !is SendRoute && this !is HistoryRoute && this !is SettingsRoute
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeBankScaffold(
     currentRoute: NavKey,
     onNavigate: (NavKey) -> Unit,
+    onBack: () -> Unit,
     showBottomNav: Boolean,
     snackbarHostState: SnackbarHostState? = null,
-    topBar: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    val showTitle = currentRoute is DashboardRoute
+    val headerTitle = currentRoute.headerTitle()
+    val showBackButton = currentRoute.showBackButton()
 
     Scaffold(
         topBar = {
-            if (showTitle) {
-                TopAppBar(title = { Text("DeBank") })
-            } else {
-                topBar()
+            if (headerTitle != null) {
+                TopAppBar(
+                    title = { Text(headerTitle) },
+                    navigationIcon = {
+                        if (showBackButton) {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Kembali"
+                                )
+                            }
+                        }
+                    }
+                )
             }
         },
         snackbarHost = if (snackbarHostState != null) {

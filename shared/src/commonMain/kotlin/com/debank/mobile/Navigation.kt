@@ -142,6 +142,14 @@ fun NavigationApp(
             backStack.add(DashboardRoute)
             backStack.add(route)
         },
+        onBack = {
+            if (backStack.size > 1) {
+                backStack.removeLastOrNull()
+            } else {
+                backStack.clear()
+                backStack.add(DashboardRoute)
+            }
+        },
         showBottomNav = showBottomNav
     ) {
         NavDisplay(

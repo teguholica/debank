@@ -1,5 +1,6 @@
 package com.debank.mobile.ui.send
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,17 +21,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +57,6 @@ private sealed class SendStep {
     data object Submitting : SendStep()
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SendFlow(
     store: KeyValueStore,
@@ -102,37 +99,12 @@ fun SendFlow(
         return amountError == null
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Kirim IDR") })
-        },
-        snackbarHost = {
-            SnackbarHost(snackbar) { data ->
-                val isSuccess = data.visuals.message.startsWith("✓")
-                val displayMessage = data.visuals.message.removePrefix("✓").removePrefix("✗")
-                Snackbar(
-                    shape = RoundedCornerShape(12.dp),
-                    containerColor = if (isSuccess) Color(0xFF43A047) else MaterialTheme.colorScheme.error,
-                    contentColor = Color.White
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
-                            contentDescription = null,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(displayMessage)
-                    }
-                }
-            }
-        }
-    ) { padding ->
+    Column(modifier = Modifier.fillMaxSize()) {
         when (val currentStep = step) {
             SendStep.Input -> {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
+                        .weight(1f)
                         .padding(16.dp)
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -206,8 +178,7 @@ fun SendFlow(
             is SendStep.Confirm -> {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
+                        .weight(1f)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -268,7 +239,6 @@ fun SendFlow(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -324,15 +294,32 @@ fun SendFlow(
 
             SendStep.Submitting -> {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
+                    modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                    verticalArrangement = Arrangement.Center
                 ) {
                     CircularProgressIndicator()
                     Spacer(Modifier.height(16.dp))
                     Text("Mengirim transaksi...")
+                }
+            }
+        }
+
+        SnackbarHost(snackbar) { data ->
+            val isSuccess = data.visuals.message.startsWith("✓")
+            val displayMessage = data.visuals.message.removePrefix("✓").removePrefix("✗")
+            Snackbar(
+                shape = RoundedCornerShape(12.dp),
+                containerColor = if (isSuccess) Color(0xFF43A047) else MaterialTheme.colorScheme.error,
+                contentColor = Color.White
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text(displayMessage)
                 }
             }
         }

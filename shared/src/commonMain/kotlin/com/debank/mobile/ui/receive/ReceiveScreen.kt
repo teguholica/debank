@@ -17,13 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,7 +36,6 @@ import com.debank.mobile.data.rememberCopyToClipboard
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReceiveScreen(
     publicKey: String,
@@ -66,20 +62,14 @@ fun ReceiveScreen(
         return
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Terima IDR") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
             Text(
                 "Scan QR ini untuk kirim IDR",
                 style = MaterialTheme.typography.titleMedium,
@@ -152,5 +142,4 @@ fun ReceiveScreen(
                 Text("Kembali")
             }
         }
-    }
 }
