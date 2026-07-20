@@ -1,5 +1,6 @@
 package com.debank.mobile.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -101,7 +102,13 @@ fun DeBankScaffold(
             }
         }
     ) { padding ->
-        content()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            content()
+        }
     }
 }
 
