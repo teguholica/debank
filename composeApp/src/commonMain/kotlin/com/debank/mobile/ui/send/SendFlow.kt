@@ -1,18 +1,26 @@
 package com.debank.mobile.ui.send
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -27,15 +35,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.debank.mobile.data.KeyValueStore
 import com.debank.mobile.data.PinManager
 import com.debank.mobile.data.StellarConfig
 import com.debank.mobile.data.StellarRepository
-import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
+import com.debank.mobile.ui.components.PinPadInput
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -101,7 +109,8 @@ fun SendFlow(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text("Kirim IDR", style = MaterialTheme.typography.headlineSmall)
@@ -126,6 +135,8 @@ fun SendFlow(
                         onClick = onPickContact,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.height(18.dp))
+                        Spacer(Modifier.width(8.dp))
                         Text("Dari Kontak")
                     }
 
@@ -159,7 +170,7 @@ fun SendFlow(
 
                     Spacer(Modifier.height(8.dp))
 
-                    Button(
+                    OutlinedButton(
                         onClick = onBack,
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -179,18 +190,31 @@ fun SendFlow(
                     Text("Konfirmasi Pengiriman", style = MaterialTheme.typography.headlineSmall)
                     Spacer(Modifier.height(24.dp))
 
-                    Text("Tujuan", style = MaterialTheme.typography.titleSmall)
-                    Text(currentStep.address, style = MaterialTheme.typography.bodyMedium)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Tujuan", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(4.dp))
+                            Text(currentStep.address, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
 
-                    Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                    Text("Jumlah", style = MaterialTheme.typography.titleSmall)
-                    Text("${currentStep.amount} IDR", style = MaterialTheme.typography.bodyMedium)
+                            Text("Jumlah", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(4.dp))
+                            Text("${currentStep.amount} IDR", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
 
-                    Spacer(Modifier.height(16.dp))
+                            Spacer(Modifier.height(16.dp))
 
-                    Text("Biaya (fee)", style = MaterialTheme.typography.titleSmall)
-                    Text("100 stroops", style = MaterialTheme.typography.bodyMedium)
+                            Text("Biaya (fee)", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(4.dp))
+                            Text("100 stroops", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
 
                     Spacer(Modifier.height(32.dp))
 
@@ -207,7 +231,7 @@ fun SendFlow(
 
                     Spacer(Modifier.height(8.dp))
 
-                    Button(
+                    OutlinedButton(
                         onClick = { step = SendStep.Input },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -224,34 +248,19 @@ fun SendFlow(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Spacer(Modifier.weight(0.2f))
                     Text("Masukkan PIN", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.height(24.dp))
-                    Text("Masukkan PIN untuk mengirim transaksi")
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text("Masukkan PIN untuk mengirim transaksi", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(32.dp))
 
-                    OutlinedTextField(
-                        value = pin,
-                        onValueChange = {
-                            if (it.all { c -> c.isDigit() } && it.length <= 6) {
-                                pin = it
-                                pinError = false
-                            }
-                        },
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                        label = { Text("PIN") },
-                        isError = pinError
-                    )
-
-                    if (pinError) {
-                        Text("PIN salah", color = MaterialTheme.colorScheme.error)
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            val storedHash = store.getString(KeyValueStore.PIN_HASH_KEY) ?: return@Button
+                    PinPadInput(
+                        pin = pin,
+                        onDigit = { pin += it.toString(); pinError = false },
+                        onDelete = { if (pin.isNotEmpty()) pin = pin.dropLast(1) },
+                        maxLength = 6,
+                        onComplete = {
+                            val storedHash = store.getString(KeyValueStore.PIN_HASH_KEY) ?: return@PinPadInput
                             if (PinManager.verify(pin, storedHash)) {
                                 step = SendStep.Submitting
                                 scope.launch {
@@ -275,21 +284,17 @@ fun SendFlow(
                                 }
                             } else {
                                 pinError = true
+                                pin = ""
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Kirim")
+                        }
+                    )
+
+                    if (pinError) {
+                        Spacer(Modifier.height(16.dp))
+                        Text("PIN salah", color = MaterialTheme.colorScheme.error)
                     }
 
-                    Spacer(Modifier.height(8.dp))
-
-                    Button(
-                        onClick = { step = SendStep.Confirm(address, amount); pin = "" },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Kembali")
-                    }
+                    Spacer(Modifier.weight(0.2f))
                 }
             }
 
@@ -299,7 +304,7 @@ fun SendFlow(
                         .fillMaxSize()
                         .padding(padding),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
                 ) {
                     CircularProgressIndicator()
                     Spacer(Modifier.height(16.dp))

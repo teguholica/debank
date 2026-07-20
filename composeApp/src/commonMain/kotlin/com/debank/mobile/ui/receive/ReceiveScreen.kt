@@ -9,11 +9,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -42,6 +47,7 @@ fun ReceiveScreen(
     onBack: () -> Unit
 ) {
     var showScanner by remember { mutableStateOf(false) }
+    var copied by remember { mutableStateOf(false) }
     val copyToClipboard = rememberCopyToClipboard()
     val scope = rememberCoroutineScope()
     val qrPainter = rememberQrCodePainter(data = publicKey)
@@ -76,7 +82,8 @@ fun ReceiveScreen(
         ) {
             Text(
                 "Scan QR ini untuk kirim IDR",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(Modifier.height(24.dp))
@@ -84,7 +91,7 @@ fun ReceiveScreen(
             Image(
                 painter = qrPainter,
                 contentDescription = "QR Code",
-                modifier = Modifier.size(250.dp),
+                modifier = Modifier.size(280.dp),
                 contentScale = ContentScale.Fit
             )
 
@@ -92,7 +99,8 @@ fun ReceiveScreen(
 
             Text(
                 "Alamat Stellar",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(Modifier.height(8.dp))
@@ -101,7 +109,8 @@ fun ReceiveScreen(
                 Text(
                     text = publicKey,
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -110,10 +119,17 @@ fun ReceiveScreen(
             Button(
                 onClick = {
                     copyToClipboard(publicKey)
+                    copied = true
+                    scope.launch {
+                        kotlinx.coroutines.delay(2000)
+                        copied = false
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Salin Alamat")
+                Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (copied) "Tersalin!" else "Salin Alamat")
             }
 
             Spacer(Modifier.height(12.dp))
@@ -122,6 +138,8 @@ fun ReceiveScreen(
                 onClick = { showScanner = true },
                 modifier = Modifier.fillMaxWidth()
             ) {
+                Icon(Icons.Default.QrCodeScanner, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
                 Text("Scan QR")
             }
 

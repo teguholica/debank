@@ -1,5 +1,6 @@
 package com.debank.mobile.ui.contact
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,14 +10,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -31,7 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.debank.mobile.data.ContactStore
@@ -49,76 +59,87 @@ fun ContactListScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingContact by remember { mutableStateOf<Contact?>(null) }
     var deleteConfirmContact by remember { mutableStateOf<Contact?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
 
     fun refresh() { contacts = contactStore.getAll() }
+
+    val filteredContacts = if (searchQuery.isBlank()) contacts
+    else contacts.filter {
+        it.name.contains(searchQuery, ignoreCase = true) ||
+        it.address.contains(searchQuery, ignoreCase = true)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(if (isPicker) "Pilih Kontak" else "Kontak") })
         }
     ) { padding ->
-        if (contacts.isEmpty()) {
-            Box(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 16.dp)
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Cari kontak...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                },
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        "Belum ada kontak",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (!isPicker) {
-                        Spacer(Modifier.height(16.dp))
-                        Button(onClick = { showAddDialog = true }) {
-                            Text("Tambah Kontak")
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            if (filteredContacts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            if (searchQuery.isNotBlank()) "Kontak tidak ditemukan"
+                            else "Belum ada kontak",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (!isPicker && searchQuery.isBlank()) {
+                            Spacer(Modifier.height(16.dp))
+                            Button(onClick = { showAddDialog = true }) {
+                                Text("Tambah Kontak")
+                            }
                         }
                     }
-                    Spacer(Modifier.height(16.dp))
-                    OutlinedButton(onClick = onBack) {
-                        Text("Kembali")
-                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (!isPicker) {
-                    item {
-                        Button(
-                            onClick = { showAddDialog = true },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Tambah Kontak")
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (!isPicker && searchQuery.isBlank()) {
+                        item {
+                            Button(
+                                onClick = { showAddDialog = true },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Tambah Kontak")
+                            }
+                            Spacer(Modifier.height(8.dp))
                         }
-                        Spacer(Modifier.height(8.dp))
                     }
-                }
-                items(contacts, key = { it.address }) { contact ->
-                    ContactCard(
-                        contact = contact,
-                        isPicker = isPicker,
-                        onPick = { onContactPicked(contact.address) },
-                        onEdit = { editingContact = contact },
-                        onDelete = { deleteConfirmContact = contact }
-                    )
-                }
-                item {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
-                    ) {
-                        Text("Kembali")
+                    items(filteredContacts, key = { it.address }) { contact ->
+                        ContactCard(
+                            contact = contact,
+                            isPicker = isPicker,
+                            onPick = { onContactPicked(contact.address) },
+                            onEdit = { editingContact = contact },
+                            onDelete = { deleteConfirmContact = contact }
+                        )
                     }
                 }
             }
@@ -176,6 +197,15 @@ fun ContactListScreen(
     }
 }
 
+private fun String.getInitial(): String {
+    return this.trim().takeIf { it.isNotEmpty() }?.first()?.uppercase() ?: "?"
+}
+
+private val avatarColors = listOf(
+    Color(0xFF00897B), Color(0xFF00796B), Color(0xFF546E7A),
+    Color(0xFF6D4C41), Color(0xFF5C6BC0), Color(0xFF00838F)
+)
+
 @Composable
 private fun ContactCard(
     contact: Contact,
@@ -187,26 +217,44 @@ private fun ContactCard(
     Card(
         onClick = if (isPicker) onPick else onEdit,
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val colorIndex = contact.name.hashCode().mod(avatarColors.size).let { if (it < 0) it + avatarColors.size else it }
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(avatarColors[colorIndex]),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    contact.name.getInitial(),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = contact.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(Modifier.height(2.dp))
                 Text(
                     text = contact.address,
                     style = MaterialTheme.typography.bodySmall,
@@ -215,8 +263,8 @@ private fun ContactCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
             if (!isPicker) {
-                Spacer(Modifier.width(8.dp))
                 TextButton(onClick = onDelete) {
                     Text("Hapus", color = MaterialTheme.colorScheme.error)
                 }

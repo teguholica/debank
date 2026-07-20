@@ -27,11 +27,20 @@ fun OnboardingFlow(
     val generator = remember { Bip39Generator() }
     var seedPhrase by remember { mutableStateOf(generator.generate()) }
     var step by remember { mutableStateOf<OnboardingStep>(OnboardingStep.GenerateSeed) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+
+    val stepNumber = when (step) {
+        is OnboardingStep.GenerateSeed -> 1
+        is OnboardingStep.ConfirmSeed -> 2
+        is OnboardingStep.PinSetup -> 3
+    }
 
     when (val currentStep = step) {
         OnboardingStep.GenerateSeed -> GenerateSeedScreen(
             words = seedPhrase,
+            currentStep = stepNumber,
+            totalSteps = 3,
             onNext = {
                 val challenges = generator.createChallenges(seedPhrase)
                 step = OnboardingStep.ConfirmSeed(challenges)
@@ -39,18 +48,28 @@ fun OnboardingFlow(
         )
         is OnboardingStep.ConfirmSeed -> ConfirmSeedScreen(
             challenges = currentStep.challenges,
+            currentStep = stepNumber,
+            totalSteps = 3,
             onVerified = { step = OnboardingStep.PinSetup }
         )
         OnboardingStep.PinSetup -> PinSetupScreen(
             store = store,
+            currentStep = stepNumber,
+            totalSteps = 3,
+            errorMessage = errorMessage,
             onComplete = {
                 scope.launch {
-                    val kp = repository.createKeyPair()
-                    repository.fundTestnetAccount(kp.publicKey)
-                    store.setString(KeyValueStore.PUBLIC_KEY_KEY, kp.publicKey)
-                    store.setString(KeyValueStore.SECRET_SEED_KEY, kp.secretSeed)
-                    store.setString(KeyValueStore.SEED_PHRASE_KEY, seedPhrase.joinToString(" "))
-                    onComplete()
+                    errorMessage = null
+                    try {
+                        val kp = repository.createKeyPair()
+                        store.setString(KeyValueStore.PUBLIC_KEY_KEY, kp.publicKey)
+                        store.setString(KeyValueStore.SECRET_SEED_KEY, kp.secretSeed)
+                        store.setString(KeyValueStore.SEED_PHRASE_KEY, seedPhrase.joinToString(" "))
+                        repository.fundTestnetAccount(kp.publicKey)
+                        onComplete()
+                    } catch (e: Exception) {
+                        errorMessage = "Gagal terhubung ke server. Periksa koneksi internet."
+                    }
                 }
             }
         )

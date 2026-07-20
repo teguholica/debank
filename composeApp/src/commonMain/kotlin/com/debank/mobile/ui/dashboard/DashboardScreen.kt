@@ -2,19 +2,23 @@ package com.debank.mobile.ui.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,12 +27,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.debank.mobile.data.StellarConfig
 import com.debank.mobile.data.StellarRepository
 import com.debank.mobile.domain.AccountBalance
+import com.debank.mobile.domain.KeyPairData
+import com.debank.mobile.domain.TransactionItem
+import com.debank.mobile.ui.components.BalanceCard
+import com.debank.mobile.ui.components.QuickActionItem
+import com.debank.mobile.ui.components.QuickActionRow
+import com.debank.mobile.ui.components.TransactionCard
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,17 +46,20 @@ import kotlinx.coroutines.launch
 fun DashboardScreen(
     repository: StellarRepository,
     publicKey: String,
+    secretSeed: String,
     onSend: () -> Unit,
     onReceive: () -> Unit,
-    onLogout: () -> Unit,
     onHistory: () -> Unit,
-    onContacts: () -> Unit,
     onSettings: () -> Unit
 ) {
     var balance by remember { mutableStateOf<AccountBalance?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf(false) }
+    var funding by remember { mutableStateOf(false) }
+    var fundError by remember { mutableStateOf<String?>(null) }
+    var recentTxns by remember { mutableStateOf<List<TransactionItem>>(emptyList()) }
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
 
     fun fetchBalance() {
         scope.launch {
@@ -61,93 +74,109 @@ fun DashboardScreen(
         }
     }
 
-    LaunchedEffect(publicKey) { fetchBalance() }
+    fun fetchRecentTransactions() {
+        scope.launch {
+            try {
+                val all = repository.getTransactions(publicKey)
+                recentTxns = all.take(5)
+            } catch (_: Exception) { }
+        }
+    }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("DeBank") }) }
-    ) { padding ->
-        PullToRefreshBox(
-            isRefreshing = loading,
-            onRefresh = { fetchBalance() },
+    fun fundIdr() {
+        scope.launch {
+            funding = true
+            fundError = null
+            try {
+                repository.fundTestIdr(KeyPairData(publicKey, secretSeed))
+                fetchBalance()
+            } catch (e: Exception) {
+                fundError = "Gagal: ${e.message}"
+            }
+            funding = false
+        }
+    }
+
+    LaunchedEffect(publicKey) {
+        fetchBalance()
+        fetchRecentTransactions()
+    }
+
+    PullToRefreshBox(
+        isRefreshing = loading,
+        onRefresh = {
+            fetchBalance()
+            fetchRecentTransactions()
+        },
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text("DeBank Wallet", style = MaterialTheme.typography.headlineLarge)
+            item {
+                BalanceCard(
+                    balance = balance?.balance,
+                    loading = loading,
+                    error = error,
+                    onRefresh = { fetchBalance() }
+                )
+            }
 
-                Spacer(Modifier.height(32.dp))
-
-                if (error) {
-                    Text("Gagal memuat saldo", color = MaterialTheme.colorScheme.error)
-                } else if (balance != null) {
+            if (fundError != null) {
+                item {
                     Text(
-                        "Saldo IDR",
-                        style = MaterialTheme.typography.titleMedium
+                        fundError ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
                     )
-                    Text(
-                        "${balance!!.balance} IDR",
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                }
-
-                Spacer(Modifier.height(32.dp))
-
-                Button(
-                    onClick = onSend,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Kirim")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onReceive,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Terima")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onHistory,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Riwayat")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onContacts,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Kontak")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = onSettings,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Pengaturan")
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(onClick = onLogout) {
-                    Text("Logout / Reset")
                 }
             }
+
+            item {
+                QuickActionRow(
+                    actions = listOf(
+                        QuickActionItem(Icons.Default.Send, "Kirim", onSend),
+                        QuickActionItem(Icons.Default.Download, "Terima", onReceive),
+                        QuickActionItem(
+                            Icons.Default.WaterDrop,
+                            if (funding) "Memproses..." else "Isi Saldo",
+                            { if (!funding) fundIdr() }
+                        )
+                    )
+                )
+            }
+
+            item {
+                Spacer(Modifier.height(8.dp))
+            }
+
+            item {
+                Text(
+                    "Transaksi Terakhir",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            if (recentTxns.isEmpty()) {
+                item {
+                    Text(
+                        "Belum ada transaksi",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                items(recentTxns, key = { it.id }) { txn ->
+                    TransactionCard(txn, onClick = onHistory)
+                }
+            }
+
         }
     }
 }

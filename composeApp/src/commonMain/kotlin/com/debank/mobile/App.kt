@@ -1,6 +1,5 @@
 package com.debank.mobile
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,10 +17,12 @@ import com.debank.mobile.ui.pin.PinVerifyScreen
 import com.debank.mobile.ui.receive.ReceiveScreen
 import com.debank.mobile.ui.send.SendFlow
 import com.debank.mobile.ui.settings.SettingsScreen
+import com.debank.mobile.ui.components.DeBankScaffold
+import com.debank.mobile.ui.theme.DeBankTheme
 
 @Composable
 fun App(store: KeyValueStore) {
-    MaterialTheme {
+    DeBankTheme {
         val repository = remember { StellarRepositoryImpl() }
         val contactStore = remember { ContactStore(store) }
         val startScreen = remember {
@@ -38,7 +39,7 @@ fun App(store: KeyValueStore) {
             screen = AppScreen.Onboarding
         }
 
-        when (val currentScreen = screen) {
+        when (screen) {
             AppScreen.Onboarding -> OnboardingFlow(
                 store = store,
                 repository = repository,
@@ -48,56 +49,82 @@ fun App(store: KeyValueStore) {
                 store = store,
                 onSuccess = { screen = AppScreen.Dashboard }
             )
-            AppScreen.Dashboard -> DashboardScreen(
-                repository = repository,
-                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
-                onSend = { screen = AppScreen.Send() },
-                onReceive = { screen = AppScreen.Receive },
-                onHistory = { screen = AppScreen.History },
-                onContacts = { screen = AppScreen.ContactList },
-                onSettings = { screen = AppScreen.Settings },
-                onLogout = logout
-            )
-            is AppScreen.Send -> SendFlow(
-                store = store,
-                repository = repository,
-                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
-                secretSeed = store.getString(KeyValueStore.SECRET_SEED_KEY) ?: "",
-                onBack = { screen = AppScreen.Dashboard },
-                onSuccess = { screen = AppScreen.Dashboard },
-                onPickContact = { screen = AppScreen.ContactPicker },
-                prefilledAddress = currentScreen.prefilledAddress
-            )
-            AppScreen.Receive -> ReceiveScreen(
-                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
-                onScanResult = { address ->
-                    screen = AppScreen.Send(prefilledAddress = address)
-                },
-                onBack = { screen = AppScreen.Dashboard }
-            )
-            AppScreen.History -> HistoryScreen(
-                repository = repository,
-                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
-                onBack = { screen = AppScreen.Dashboard }
-            )
-            AppScreen.ContactList -> ContactListScreen(
-                contactStore = contactStore,
-                isPicker = false,
-                onBack = { screen = AppScreen.Dashboard }
-            )
-            AppScreen.ContactPicker -> ContactListScreen(
-                contactStore = contactStore,
-                isPicker = true,
-                onBack = { screen = AppScreen.Send() },
-                onContactPicked = { address ->
-                    screen = AppScreen.Send(prefilledAddress = address)
+            else -> {
+                val showBottomNav = screen in setOf(
+                    AppScreen.Dashboard,
+                    AppScreen.Send(),
+                    AppScreen.History,
+                    AppScreen.Settings
+                )
+
+                fun navigate(target: AppScreen) {
+                    screen = target
                 }
-            )
-            AppScreen.Settings -> SettingsScreen(
-                store = store,
-                onBack = { screen = AppScreen.Dashboard },
-                onLogout = logout
-            )
+
+                fun onBack() {
+                    screen = AppScreen.Dashboard
+                }
+
+                DeBankScaffold(
+                    currentScreen = screen,
+                    onNavigate = { navigate(it) },
+                    showBottomNav = showBottomNav,
+                    topBar = {}
+                ) {
+                    when (val s = screen) {
+                        AppScreen.Dashboard -> DashboardScreen(
+                            repository = repository,
+                            publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
+                            secretSeed = store.getString(KeyValueStore.SECRET_SEED_KEY) ?: "",
+                            onSend = { navigate(AppScreen.Send()) },
+                            onReceive = { navigate(AppScreen.Receive) },
+                            onHistory = { navigate(AppScreen.History) },
+                            onSettings = { navigate(AppScreen.Settings) }
+                        )
+                        is AppScreen.Send -> SendFlow(
+                            store = store,
+                            repository = repository,
+                            publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
+                            secretSeed = store.getString(KeyValueStore.SECRET_SEED_KEY) ?: "",
+                            onBack = { onBack() },
+                            onSuccess = { onBack() },
+                            onPickContact = { navigate(AppScreen.ContactPicker) },
+                            prefilledAddress = s.prefilledAddress
+                        )
+                        AppScreen.Receive -> ReceiveScreen(
+                            publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
+                            onScanResult = { address ->
+                                navigate(AppScreen.Send(prefilledAddress = address))
+                            },
+                            onBack = { onBack() }
+                        )
+                        AppScreen.History -> HistoryScreen(
+                            repository = repository,
+                            publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
+                            onBack = { onBack() }
+                        )
+                        AppScreen.ContactList -> ContactListScreen(
+                            contactStore = contactStore,
+                            isPicker = false,
+                            onBack = { onBack() }
+                        )
+                        AppScreen.ContactPicker -> ContactListScreen(
+                            contactStore = contactStore,
+                            isPicker = true,
+                            onBack = { onBack() },
+                            onContactPicked = { address ->
+                                navigate(AppScreen.Send(prefilledAddress = address))
+                            }
+                        )
+                        AppScreen.Settings -> SettingsScreen(
+                            store = store,
+                            onBack = { onBack() },
+                            onLogout = logout
+                        )
+                        else -> {}
+                    }
+                }
+            }
         }
     }
 }

@@ -8,15 +8,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -27,12 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.debank.mobile.data.KeyValueStore
 import com.debank.mobile.data.PinManager
+import com.debank.mobile.ui.components.PinPadInput
 
 private sealed class SettingsStep {
     data object Menu : SettingsStep()
@@ -96,7 +102,7 @@ private fun SettingsMenu(
             text = { Text("Semua data lokal akan dihapus. Lanjutkan?") },
             confirmButton = {
                 TextButton(onClick = onLogout) {
-                    Text("Ya, Hapus")
+                    Text("Ya, Hapus", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -116,41 +122,72 @@ private fun SettingsMenu(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(16.dp)
         ) {
-            Spacer(Modifier.height(24.dp))
+            SettingsItem(
+                icon = Icons.Default.Key,
+                title = "Lihat Seed Phrase",
+                subtitle = "12 kata pemulihan wallet",
+                onClick = onShowSeedPhrase
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            SettingsItem(
+                icon = Icons.Default.Lock,
+                title = "Ganti PIN",
+                subtitle = "Ubah PIN 4-6 digit",
+                onClick = onChangePin
+            )
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            SettingsItem(
+                icon = Icons.Default.Logout,
+                title = "Logout / Reset",
+                subtitle = "Hapus semua data lokal",
+                titleColor = MaterialTheme.colorScheme.error,
+                onClick = { showLogoutConfirm = true }
+            )
+        }
+    }
+}
 
-            Button(
-                onClick = onShowSeedPhrase,
-                modifier = Modifier.fillMaxWidth(0.7f)
-            ) {
-                Text("Lihat Seed Phrase")
-            }
-
-            OutlinedButton(
-                onClick = onChangePin,
-                modifier = Modifier.fillMaxWidth(0.7f)
-            ) {
-                Text("Ganti PIN")
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            OutlinedButton(
-                onClick = { showLogoutConfirm = true },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                modifier = Modifier.fillMaxWidth(0.7f)
-            ) {
-                Text("Logout / Reset")
-            }
-
-            Spacer(Modifier.weight(1f))
-            OutlinedButton(onClick = onBack) {
-                Text("Kembali")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    titleColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                icon,
+                contentDescription = title,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = titleColor
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -178,41 +215,28 @@ private fun PinVerifyForSeedScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(Modifier.weight(0.2f))
             Text("Masukkan PIN untuk melihat seed phrase")
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
 
-            OutlinedTextField(
-                value = pin,
-                onValueChange = {
-                    if (it.all { c -> c.isDigit() } && it.length <= 6) {
-                        pin = it
-                        error = false
-                    }
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                label = { Text("PIN") },
-                isError = error
+            PinPadInput(
+                pin = pin,
+                onDigit = { pin += it.toString(); error = false },
+                onDelete = { if (pin.isNotEmpty()) pin = pin.dropLast(1) },
+                maxLength = 6,
+                onComplete = {
+                    if (pin.isEmpty()) return@PinPadInput
+                    val storedHash = store.getString(KeyValueStore.PIN_HASH_KEY) ?: return@PinPadInput
+                    if (PinManager.verify(pin, storedHash)) onVerifySuccess()
+                    else { error = true; pin = "" }
+                }
             )
 
             if (error) {
+                Spacer(Modifier.height(16.dp))
                 Text("PIN salah", color = MaterialTheme.colorScheme.error)
             }
-
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = {
-                if (pin.isEmpty()) return@Button
-                val storedHash = store.getString(KeyValueStore.PIN_HASH_KEY) ?: return@Button
-                if (PinManager.verify(pin, storedHash)) onVerifySuccess()
-                else error = true
-            }) {
-                Text("Verifikasi")
-            }
-
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onBack) {
-                Text("Kembali")
-            }
+            Spacer(Modifier.weight(0.2f))
         }
     }
 }
@@ -237,11 +261,15 @@ private fun ShowSeedPhraseScreen(
                 "Jangan screenshot! Catat 12 kata ini di tempat aman.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.error
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.SemiBold
             )
             Spacer(Modifier.height(24.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 words.chunked(3).forEachIndexed { rowIdx, row ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -260,7 +288,7 @@ private fun ShowSeedPhraseScreen(
             }
 
             Spacer(Modifier.height(32.dp))
-            OutlinedButton(onClick = onBack) {
+            TextButton(onClick = onBack) {
                 Text("Kembali")
             }
         }
@@ -278,6 +306,7 @@ private fun ChangePinScreen(
     var newPin by remember { mutableStateOf("") }
     var confirmPin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
+    var step by remember { mutableStateOf(0) }
 
     fun validateAndSave() {
         if (oldPin.isEmpty()) { error = "Masukkan PIN lama"; return }
@@ -311,62 +340,63 @@ private fun ChangePinScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            OutlinedTextField(
-                value = oldPin,
-                onValueChange = {
-                    if (it.all { c -> c.isDigit() } && it.length <= 6) {
-                        oldPin = it; error = ""
-                    }
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                label = { Text("PIN Lama") },
-                modifier = Modifier.fillMaxWidth(0.7f)
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = newPin,
-                onValueChange = {
-                    if (it.all { c -> c.isDigit() } && it.length <= 6) {
-                        newPin = it; error = ""
-                    }
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                label = { Text("PIN Baru") },
-                modifier = Modifier.fillMaxWidth(0.7f)
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = confirmPin,
-                onValueChange = {
-                    if (it.all { c -> c.isDigit() } && it.length <= 6) {
-                        confirmPin = it; error = ""
-                    }
-                },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                label = { Text("Konfirmasi PIN Baru") },
-                modifier = Modifier.fillMaxWidth(0.7f)
-            )
+            when (step) {
+                0 -> {
+                    Text("Masukkan PIN Lama")
+                    Spacer(Modifier.height(24.dp))
+                    PinPadInput(
+                        pin = oldPin,
+                        onDigit = { oldPin += it.toString(); error = "" },
+                        onDelete = { if (oldPin.isNotEmpty()) oldPin = oldPin.dropLast(1) },
+                        onComplete = { step = 1 }
+                    )
+                }
+                1 -> {
+                    Text("Masukkan PIN Baru")
+                    Spacer(Modifier.height(24.dp))
+                    PinPadInput(
+                        pin = newPin,
+                        onDigit = {
+                            if (newPin.length < 6) { newPin += it.toString(); error = "" }
+                        },
+                        onDelete = { if (newPin.isNotEmpty()) newPin = newPin.dropLast(1) },
+                        onComplete = {
+                            if (newPin.length < 4) error = "PIN baru minimal 4 digit"
+                            else step = 2
+                        }
+                    )
+                }
+                2 -> {
+                    Text("Konfirmasi PIN Baru")
+                    Spacer(Modifier.height(24.dp))
+                    PinPadInput(
+                        pin = confirmPin,
+                        onDigit = {
+                            if (confirmPin.length < 6) { confirmPin += it.toString(); error = "" }
+                        },
+                        onDelete = { if (confirmPin.isNotEmpty()) confirmPin = confirmPin.dropLast(1) },
+                        onComplete = {
+                            if (newPin != confirmPin) {
+                                error = "PIN tidak cocok"
+                                confirmPin = ""
+                            } else {
+                                validateAndSave()
+                            }
+                        }
+                    )
+                }
+            }
 
             if (error.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text(error, color = MaterialTheme.colorScheme.error)
             }
 
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = { validateAndSave() }) {
-                Text("Simpan")
-            }
-
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onBack) {
-                Text("Batal")
+            if (step > 0) {
+                Spacer(Modifier.height(16.dp))
+                TextButton(onClick = { step--; error = "" }) {
+                    Text("Kembali")
+                }
             }
         }
     }
