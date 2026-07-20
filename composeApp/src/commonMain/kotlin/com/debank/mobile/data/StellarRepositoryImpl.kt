@@ -5,6 +5,7 @@ import com.soneso.stellar.sdk.Network
 import com.soneso.stellar.sdk.TransactionBuilder
 import com.soneso.stellar.sdk.Account
 import com.soneso.stellar.sdk.horizon.HorizonServer
+import com.soneso.stellar.sdk.horizon.exceptions.BadRequestException
 import com.soneso.stellar.sdk.horizon.requests.RequestBuilder
 import com.soneso.stellar.sdk.horizon.responses.operations.PaymentOperationResponse
 import com.soneso.stellar.sdk.AssetTypeCreditAlphaNum4
@@ -23,7 +24,7 @@ import kotlinx.coroutines.withContext
 
 class StellarRepositoryImpl(
     private val horizonUrl: String = StellarConfig.HORIZON_TESTNET,
-    private val httpClient: HttpClient = HttpClient()
+    private val httpClient: HttpClient = createHttpClient()
 ) : StellarRepository {
 
     private val server = HorizonServer(horizonUrl)
@@ -46,12 +47,16 @@ class StellarRepositoryImpl(
     }
 
     override suspend fun getAccountBalance(publicKey: String, assetCode: String): AccountBalance = withContext(Dispatchers.Default) {
-        val account = server.accounts().account(publicKey)
-        val balance = account.balances.find { it.assetCode == assetCode }
-        AccountBalance(
-            assetCode = assetCode,
-            balance = balance?.balance ?: "0.0000000"
-        )
+        try {
+            val account = server.accounts().account(publicKey)
+            val balance = account.balances.find { it.assetCode == assetCode }
+            AccountBalance(
+                assetCode = assetCode,
+                balance = balance?.balance ?: "0.0000000"
+            )
+        } catch (_: BadRequestException) {
+            AccountBalance(assetCode = assetCode, balance = "0.0000000")
+        }
     }
 
     override suspend fun sendPayment(keyPair: KeyPairData, destination: String, amount: String, assetId: AssetId): String = withContext(Dispatchers.Default) {
@@ -86,6 +91,20 @@ class StellarRepositoryImpl(
         transaction.sign(kp)
         val response = server.submitTransaction(transaction.toEnvelopeXdrBase64())
         response.hash
+    }
+
+    override suspend fun fundTestIdr(recipientKeyPair: KeyPairData): String = withContext(Dispatchers.Default) {
+        val assetId = StellarConfig.idrAssetId()
+        try {
+            addTrustline(recipientKeyPair, assetId)
+        } catch (_: Exception) {
+            // trustline may already exist
+        }
+        val issuerKeyPair = KeyPairData(
+            publicKey = StellarConfig.IDR_ISSUER_PUBLIC_KEY,
+            secretSeed = StellarConfig.IDR_ISSUER_SECRET_SEED
+        )
+        sendPayment(issuerKeyPair, recipientKeyPair.publicKey, "1000.0000000", assetId)
     }
 
     override suspend fun getTransactions(publicKey: String): List<TransactionItem> = withContext(Dispatchers.Default) {

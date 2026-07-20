@@ -40,6 +40,8 @@ class StellarRepositoryStub : StellarRepository {
 
     override suspend fun getTransactions(publicKey: String): List<TransactionItem> = transactionsToReturn
 
+    override suspend fun fundTestIdr(recipientKeyPair: KeyPairData): String = "tx-hash-idr-fund"
+
     data class PaymentData(
         val keyPair: KeyPairData,
         val destination: String,

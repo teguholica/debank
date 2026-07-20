@@ -11,3 +11,7 @@ captures/
 xcuserdata/
 *.xcworkspace
 Pods/
+
+.issuer.json
+.kotlin/
+node_modules/
