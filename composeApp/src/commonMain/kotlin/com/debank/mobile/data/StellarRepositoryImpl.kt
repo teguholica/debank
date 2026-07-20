@@ -8,6 +8,7 @@ import com.soneso.stellar.sdk.horizon.HorizonServer
 import com.soneso.stellar.sdk.AssetTypeCreditAlphaNum4
 import com.soneso.stellar.sdk.ChangeTrustOperation
 import com.debank.mobile.domain.AccountBalance
+import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -16,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class StellarRepositoryImpl(
-    private val horizonUrl: String = "https://horizon-testnet.stellar.org",
+    private val horizonUrl: String = StellarConfig.HORIZON_TESTNET,
     private val httpClient: HttpClient = HttpClient()
 ) : StellarRepository {
 
@@ -31,7 +32,7 @@ class StellarRepositoryImpl(
     }
 
     override suspend fun fundTestnetAccount(publicKey: String): String {
-        val response = httpClient.get("https://friendbot.stellar.org") {
+        val response = httpClient.get(StellarConfig.FRIENDBOT_URL) {
             url {
                 parameters.append("addr", publicKey)
             }
@@ -48,7 +49,7 @@ class StellarRepositoryImpl(
         )
     }
 
-    override suspend fun addTrustline(keyPair: KeyPairData, assetCode: String, issuerPublicKey: String) = withContext(Dispatchers.Default) {
+    override suspend fun addTrustline(keyPair: KeyPairData, assetId: AssetId): String = withContext(Dispatchers.Default) {
         val kp = KeyPair.fromSecretSeed(keyPair.secretSeed.toCharArray())
         val accountResponse = server.accounts().account(keyPair.publicKey)
         val sourceAccount = Account(kp, accountResponse.sequenceNumber)
@@ -56,12 +57,12 @@ class StellarRepositoryImpl(
         val transaction = TransactionBuilder(sourceAccount, Network.TESTNET)
             .setBaseFee(100)
             .addOperation(
-                ChangeTrustOperation(AssetTypeCreditAlphaNum4(assetCode, issuerPublicKey))
+                ChangeTrustOperation(AssetTypeCreditAlphaNum4(assetId.code, assetId.issuerPublicKey))
             )
             .build()
 
         transaction.sign(kp)
-        server.submitTransaction(transaction.toEnvelopeXdrBase64())
-        Unit
+        val response = server.submitTransaction(transaction.toEnvelopeXdrBase64())
+        response.hash
     }
 }

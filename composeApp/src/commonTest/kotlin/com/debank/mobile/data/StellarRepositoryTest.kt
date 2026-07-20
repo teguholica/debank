@@ -1,6 +1,7 @@
 package com.debank.mobile.data
 
 import com.debank.mobile.domain.AccountBalance
+import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,12 +42,33 @@ class StellarRepositoryTest {
     }
 
     @Test
-    fun `addTrustline marks trustline as added`() = runBlocking {
+    fun `addTrustline returns transaction hash`() = runBlocking {
         val stub = StellarRepositoryStub()
         val keyPair = KeyPairData("GABC123", "SABC123")
+        val assetId = AssetId("IDR", "GISSUER")
 
-        stub.addTrustline(keyPair, "IDR", "GISSUER")
+        val result = stub.addTrustline(keyPair, assetId)
 
-        assertTrue(stub.wasTrustlineAdded())
+        assertEquals("tx-hash-IDR", result)
+    }
+
+    @Test
+    fun `addTrustline records the asset id`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val keyPair = KeyPairData("GABC123", "SABC123")
+        val assetId = AssetId("IDR", "GISSUER")
+
+        stub.addTrustline(keyPair, assetId)
+
+        assertEquals(assetId, stub.lastTrustlineAsset())
+    }
+
+    @Test
+    fun `toString hides secret seed`() {
+        val kp = KeyPairData("GABC", "SECRET123")
+        val str = kp.toString()
+
+        assertTrue("***" in str)
+        assertTrue("SECRET123" !in str)
     }
 }
