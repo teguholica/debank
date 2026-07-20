@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import com.debank.mobile.data.ContactStore
 import com.debank.mobile.data.KeyValueStore
 import com.debank.mobile.data.StellarRepositoryImpl
@@ -21,7 +20,7 @@ fun App(store: KeyValueStore) {
         val repository = remember { StellarRepositoryImpl() }
         val contactStore = remember { ContactStore(store) }
         val hasPin = remember { store.contains(KeyValueStore.PIN_HASH_KEY) }
-        var entryScreen = rememberSaveable { mutableStateOf<Any?>(if (hasPin) PinVerifyRoute else OnboardingRoute) }
+        var entryScreen = remember { mutableStateOf<Any?>(if (hasPin) PinVerifyRoute else OnboardingRoute) }
 
         val logout = {
             store.remove(KeyValueStore.PIN_HASH_KEY)
