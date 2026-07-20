@@ -22,3 +22,6 @@
 | **Horizon** | Stellar network API endpoint (`https://horizon-testnet.stellar.org`). |
 | **StellarConfig** | Object singleton berisi konstanta network, asset IDR, issuer keys. |
 | **StellarRepository** | Interface untuk semua operasi Stellar (balance, payment, fund, trustline). |
+| **Navigation3** | Library navigasi Compose Multiplatform. Package: `org.jetbrains.androidx.navigation3:navigation3-ui`. |
+| **Route** | Sealed interface `Route : NavKey` — definisi type-safe untuk semua screen navigation. |
+| **NavDisplay** | Composable dari Navigation3 untuk render back stack. Back stack adalah `SnapshotStateList<Any>`. |

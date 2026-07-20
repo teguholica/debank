@@ -1,10 +1,5 @@
 package com.debank.mobile.ui.components
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -35,30 +30,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.debank.mobile.domain.AppScreen
+import androidx.navigation3.runtime.NavKey
+import com.debank.mobile.domain.DashboardRoute
+import com.debank.mobile.domain.HistoryRoute
+import com.debank.mobile.domain.Route
+import com.debank.mobile.domain.SendRoute
+import com.debank.mobile.domain.SettingsRoute
 
 enum class BottomNavItem(
     val label: String,
     val icon: ImageVector,
-    val screen: AppScreen
+    val route: NavKey
 ) {
-    Dashboard("Dashboard", Icons.Default.Home, AppScreen.Dashboard),
-    Send("Kirim", Icons.Default.Send, AppScreen.Send()),
-    History("Riwayat", Icons.Default.History, AppScreen.History),
-    Settings("Pengaturan", Icons.Default.Settings, AppScreen.Settings)
+    Dashboard("Dashboard", Icons.Default.Home, DashboardRoute),
+    Send("Kirim", Icons.Default.Send, SendRoute()),
+    History("Riwayat", Icons.Default.History, HistoryRoute),
+    Settings("Pengaturan", Icons.Default.Settings, SettingsRoute)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeBankScaffold(
-    currentScreen: AppScreen,
-    onNavigate: (AppScreen) -> Unit,
+    currentRoute: NavKey,
+    onNavigate: (NavKey) -> Unit,
     showBottomNav: Boolean,
     snackbarHostState: SnackbarHostState? = null,
     topBar: @Composable () -> Unit = {},
-    content: @Composable (AppScreen) -> Unit
+    content: @Composable () -> Unit
 ) {
-    val showTitle = currentScreen == AppScreen.Dashboard
+    val showTitle = currentRoute is DashboardRoute
 
     Scaffold(
         topBar = {
@@ -70,8 +70,7 @@ fun DeBankScaffold(
         },
         snackbarHost = if (snackbarHostState != null) {
             {
-                val state = snackbarHostState!!
-                SnackbarHost(state) { data ->
+                SnackbarHost(snackbarHostState) { data ->
                     val isSuccess = data.visuals.message.startsWith("✓")
                     val displayMessage = data.visuals.message.removePrefix("✓").removePrefix("✗")
                     Snackbar(
@@ -96,72 +95,36 @@ fun DeBankScaffold(
         bottomBar = {
             if (showBottomNav) {
                 DeBankBottomNav(
-                    currentScreen = currentScreen,
+                    currentRoute = currentRoute,
                     onNavigate = onNavigate
                 )
             }
         }
     ) { padding ->
-        AnimatedContent(
-            targetState = currentScreen,
-            transitionSpec = {
-                val isForward = when {
-                    targetState is AppScreen.Send && initialState is AppScreen.Dashboard -> true
-                    targetState is AppScreen.History && initialState is AppScreen.Dashboard -> true
-                    targetState is AppScreen.Settings && initialState is AppScreen.Dashboard -> true
-                    targetState is AppScreen.Dashboard -> true
-                    else -> false
-                }
-                if (isForward) {
-                    slideInHorizontally(
-                        animationSpec = tween(300),
-                        initialOffsetX = { it / 4 }
-                    ) togetherWith
-                    slideOutHorizontally(
-                        animationSpec = tween(300),
-                        targetOffsetX = { -it / 4 }
-                    )
-                } else {
-                    slideInHorizontally(
-                        animationSpec = tween(300),
-                        initialOffsetX = { -it / 4 }
-                    ) togetherWith
-                    slideOutHorizontally(
-                        animationSpec = tween(300),
-                        targetOffsetX = { it / 4 }
-                    )
-                }
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            label = "screenTransition"
-        ) { screen ->
-            content(screen)
-        }
+        content()
     }
 }
 
 @Composable
 private fun DeBankBottomNav(
-    currentScreen: AppScreen,
-    onNavigate: (AppScreen) -> Unit
+    currentRoute: NavKey,
+    onNavigate: (NavKey) -> Unit
 ) {
     BottomAppBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp
     ) {
         BottomNavItem.entries.forEach { item ->
-            val isSelected = when (currentScreen) {
-                is AppScreen.Dashboard -> item == BottomNavItem.Dashboard
-                is AppScreen.Send -> item == BottomNavItem.Send
-                is AppScreen.History -> item == BottomNavItem.History
-                is AppScreen.Settings -> item == BottomNavItem.Settings
+            val isSelected = when {
+                currentRoute is DashboardRoute && item == BottomNavItem.Dashboard -> true
+                currentRoute is SendRoute && item == BottomNavItem.Send -> true
+                currentRoute is HistoryRoute && item == BottomNavItem.History -> true
+                currentRoute is SettingsRoute && item == BottomNavItem.Settings -> true
                 else -> false
             }
             NavigationBarItem(
                 selected = isSelected,
-                onClick = { onNavigate(item.screen) },
+                onClick = { onNavigate(item.route) },
                 icon = {
                     Icon(item.icon, contentDescription = item.label)
                 },
@@ -182,4 +145,3 @@ private fun DeBankBottomNav(
         }
     }
 }
-

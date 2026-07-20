@@ -1,0 +1,7 @@
+{
+  "name": "debank-faucet",
+  "private": true,
+  "dependencies": {
+    "@stellar/stellar-sdk": "^12.0.0"
+  }
+}
