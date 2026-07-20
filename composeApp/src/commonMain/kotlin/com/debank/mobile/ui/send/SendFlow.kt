@@ -1,6 +1,7 @@
 package com.debank.mobile.ui.send
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -23,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -30,10 +34,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,7 +106,26 @@ fun SendFlow(
         topBar = {
             TopAppBar(title = { Text("Kirim IDR") })
         },
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = {
+            SnackbarHost(snackbar) { data ->
+                val isSuccess = data.visuals.message.startsWith("✓")
+                val displayMessage = data.visuals.message.removePrefix("✓").removePrefix("✗")
+                Snackbar(
+                    shape = RoundedCornerShape(12.dp),
+                    containerColor = if (isSuccess) Color(0xFF43A047) else MaterialTheme.colorScheme.error,
+                    contentColor = Color.White
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(displayMessage)
+                    }
+                }
+            }
+        }
     ) { padding ->
         when (val currentStep = step) {
             SendStep.Input -> {
@@ -274,12 +298,12 @@ fun SendFlow(
                                             amount = capturedAmount,
                                             assetId = assetId
                                         )
-                                        snackbar.showSnackbar("Transaksi berhasil!")
+                                        snackbar.showSnackbar("✓ Transaksi berhasil!")
                                         delay(1500)
                                         onSuccess()
                                     } catch (e: Exception) {
                                         step = SendStep.Input
-                                        snackbar.showSnackbar(e.message ?: "Gagal mengirim transaksi")
+                                        snackbar.showSnackbar("✗ ${e.message ?: "Gagal mengirim transaksi"}")
                                     }
                                 }
                             } else {
