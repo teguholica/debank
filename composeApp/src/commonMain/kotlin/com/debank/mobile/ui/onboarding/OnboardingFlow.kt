@@ -49,6 +49,7 @@ fun OnboardingFlow(
                     repository.fundTestnetAccount(kp.publicKey)
                     store.setString(KeyValueStore.PUBLIC_KEY_KEY, kp.publicKey)
                     store.setString(KeyValueStore.SECRET_SEED_KEY, kp.secretSeed)
+                    store.setString(KeyValueStore.SEED_PHRASE_KEY, seedPhrase.joinToString(" "))
                     onComplete()
                 }
             }

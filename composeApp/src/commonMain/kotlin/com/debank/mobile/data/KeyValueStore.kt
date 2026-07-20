@@ -10,5 +10,7 @@ interface KeyValueStore {
         const val PIN_HASH_KEY = "pin_hash"
         const val PUBLIC_KEY_KEY = "public_key"
         const val SECRET_SEED_KEY = "secret_seed"
+        // ponytail: AES-GCM encrypt with PIN-derived key before production; seed phrase and secret seed both plaintext for MVP
+        const val SEED_PHRASE_KEY = "seed_phrase"
     }
 }

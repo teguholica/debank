@@ -9,4 +9,5 @@ sealed class AppScreen {
     data object History : AppScreen()
     data object ContactList : AppScreen()
     data object ContactPicker : AppScreen()
+    data object Settings : AppScreen()
 }

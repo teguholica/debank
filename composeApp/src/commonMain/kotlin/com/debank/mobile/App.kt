@@ -17,6 +17,7 @@ import com.debank.mobile.ui.onboarding.OnboardingFlow
 import com.debank.mobile.ui.pin.PinVerifyScreen
 import com.debank.mobile.ui.receive.ReceiveScreen
 import com.debank.mobile.ui.send.SendFlow
+import com.debank.mobile.ui.settings.SettingsScreen
 
 @Composable
 fun App(store: KeyValueStore) {
@@ -28,6 +29,14 @@ fun App(store: KeyValueStore) {
             else AppScreen.Onboarding
         }
         var screen by remember { mutableStateOf(startScreen) }
+
+        val logout = {
+            store.remove(KeyValueStore.PIN_HASH_KEY)
+            store.remove(KeyValueStore.PUBLIC_KEY_KEY)
+            store.remove(KeyValueStore.SECRET_SEED_KEY)
+            store.remove(KeyValueStore.SEED_PHRASE_KEY)
+            screen = AppScreen.Onboarding
+        }
 
         when (val currentScreen = screen) {
             AppScreen.Onboarding -> OnboardingFlow(
@@ -46,12 +55,8 @@ fun App(store: KeyValueStore) {
                 onReceive = { screen = AppScreen.Receive },
                 onHistory = { screen = AppScreen.History },
                 onContacts = { screen = AppScreen.ContactList },
-                onLogout = {
-                    store.remove(KeyValueStore.PIN_HASH_KEY)
-                    store.remove(KeyValueStore.PUBLIC_KEY_KEY)
-                    store.remove(KeyValueStore.SECRET_SEED_KEY)
-                    screen = AppScreen.Onboarding
-                }
+                onSettings = { screen = AppScreen.Settings },
+                onLogout = logout
             )
             is AppScreen.Send -> SendFlow(
                 store = store,
@@ -87,6 +92,11 @@ fun App(store: KeyValueStore) {
                 onContactPicked = { address ->
                     screen = AppScreen.Send(prefilledAddress = address)
                 }
+            )
+            AppScreen.Settings -> SettingsScreen(
+                store = store,
+                onBack = { screen = AppScreen.Dashboard },
+                onLogout = logout
             )
         }
     }
