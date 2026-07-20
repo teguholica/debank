@@ -3,6 +3,8 @@ package com.debank.mobile.data
 import com.debank.mobile.domain.AccountBalance
 import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
+import com.debank.mobile.domain.TransactionDirection
+import com.debank.mobile.domain.TransactionItem
 
 class StellarRepositoryStub : StellarRepository {
     private var keyPairToReturn = KeyPairData("GAAAAA", "SAAAAA")
@@ -11,12 +13,14 @@ class StellarRepositoryStub : StellarRepository {
     private var lastTrustline: AssetId? = null
     var lastPayment: PaymentData? = null
     private var paymentResult = "tx-hash-send"
+    private var transactionsToReturn: List<TransactionItem> = emptyList()
 
     fun setKeyPair(kp: KeyPairData) { keyPairToReturn = kp }
     fun setFundResult(hash: String) { fundResult = hash }
     fun setBalance(balance: AccountBalance) { balanceToReturn = balance }
     fun setPaymentResult(hash: String) { paymentResult = hash }
     fun lastTrustlineAsset() = lastTrustline
+    fun setTransactions(txns: List<TransactionItem>) { transactionsToReturn = txns }
 
     override suspend fun createKeyPair(): KeyPairData = keyPairToReturn
 
@@ -33,6 +37,8 @@ class StellarRepositoryStub : StellarRepository {
         lastPayment = PaymentData(keyPair, destination, amount, assetId)
         return paymentResult
     }
+
+    override suspend fun getTransactions(publicKey: String): List<TransactionItem> = transactionsToReturn
 
     data class PaymentData(
         val keyPair: KeyPairData,

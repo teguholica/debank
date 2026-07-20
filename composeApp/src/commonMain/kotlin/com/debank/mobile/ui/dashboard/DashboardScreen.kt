@@ -38,7 +38,8 @@ fun DashboardScreen(
     publicKey: String,
     onSend: () -> Unit,
     onReceive: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onHistory: () -> Unit
 ) {
     var balance by remember { mutableStateOf<AccountBalance?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -110,6 +111,15 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(0.6f)
                 ) {
                     Text("Terima")
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onHistory,
+                    modifier = Modifier.fillMaxWidth(0.6f)
+                ) {
+                    Text("Riwayat")
                 }
 
                 Spacer(Modifier.height(12.dp))

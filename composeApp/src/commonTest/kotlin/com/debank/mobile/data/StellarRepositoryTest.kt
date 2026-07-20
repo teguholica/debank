@@ -3,6 +3,8 @@ package com.debank.mobile.data
 import com.debank.mobile.domain.AccountBalance
 import com.debank.mobile.domain.AssetId
 import com.debank.mobile.domain.KeyPairData
+import com.debank.mobile.domain.TransactionDirection
+import com.debank.mobile.domain.TransactionItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -97,6 +99,51 @@ class StellarRepositoryTest {
         stub.sendPayment(keyPair, "GDEST", "50.5000000", assetId)
 
         assertEquals(keyPair, stub.lastPayment?.keyPair)
+    }
+
+    @Test
+    fun `getTransactions returns empty list when no transactions`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        stub.setTransactions(emptyList())
+
+        val result = stub.getTransactions("GABC123")
+
+        assertEquals(emptyList(), result)
+    }
+
+    @Test
+    fun `getTransactions returns list of transactions`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val txns = listOf(
+            TransactionItem("tx1", TransactionDirection.Inbound, "100.0000000", "GCOUNTER", 1000L),
+            TransactionItem("tx2", TransactionDirection.Outbound, "50.0000000", "GCOUNTER2", 2000L)
+        )
+        stub.setTransactions(txns)
+
+        val result = stub.getTransactions("GABC123")
+
+        assertEquals(2, result.size)
+        assertEquals("tx1", result[0].id)
+        assertEquals(TransactionDirection.Inbound, result[0].direction)
+        assertEquals("100.0000000", result[0].amount)
+        assertEquals(TransactionDirection.Outbound, result[1].direction)
+    }
+
+    @Test
+    fun `getTransactions preserves transaction order`() = runBlocking {
+        val stub = StellarRepositoryStub()
+        val txns = listOf(
+            TransactionItem("tx1", TransactionDirection.Inbound, "10.0000000", "GX", 100L),
+            TransactionItem("tx2", TransactionDirection.Outbound, "20.0000000", "GY", 200L),
+            TransactionItem("tx3", TransactionDirection.Inbound, "30.0000000", "GZ", 300L)
+        )
+        stub.setTransactions(txns)
+
+        val result = stub.getTransactions("GABC123")
+
+        assertEquals("tx1", result[0].id)
+        assertEquals("tx2", result[1].id)
+        assertEquals("tx3", result[2].id)
     }
 
     @Test

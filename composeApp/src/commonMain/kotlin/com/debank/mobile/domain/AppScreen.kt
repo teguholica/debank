@@ -6,4 +6,5 @@ sealed class AppScreen {
     data object Dashboard : AppScreen()
     data class Send(val prefilledAddress: String = "") : AppScreen()
     data object Receive : AppScreen()
+    data object History : AppScreen()
 }

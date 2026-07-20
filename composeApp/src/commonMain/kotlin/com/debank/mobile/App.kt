@@ -10,6 +10,7 @@ import com.debank.mobile.data.KeyValueStore
 import com.debank.mobile.data.StellarRepositoryImpl
 import com.debank.mobile.domain.AppScreen
 import com.debank.mobile.ui.dashboard.DashboardScreen
+import com.debank.mobile.ui.history.HistoryScreen
 import com.debank.mobile.ui.onboarding.OnboardingFlow
 import com.debank.mobile.ui.pin.PinVerifyScreen
 import com.debank.mobile.ui.receive.ReceiveScreen
@@ -40,6 +41,7 @@ fun App(store: KeyValueStore) {
                 publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
                 onSend = { screen = AppScreen.Send() },
                 onReceive = { screen = AppScreen.Receive },
+                onHistory = { screen = AppScreen.History },
                 onLogout = {
                     store.remove(KeyValueStore.PIN_HASH_KEY)
                     store.remove(KeyValueStore.PUBLIC_KEY_KEY)
@@ -61,6 +63,11 @@ fun App(store: KeyValueStore) {
                 onScanResult = { address ->
                     screen = AppScreen.Send(prefilledAddress = address)
                 },
+                onBack = { screen = AppScreen.Dashboard }
+            )
+            AppScreen.History -> HistoryScreen(
+                repository = repository,
+                publicKey = store.getString(KeyValueStore.PUBLIC_KEY_KEY) ?: "",
                 onBack = { screen = AppScreen.Dashboard }
             )
         }
