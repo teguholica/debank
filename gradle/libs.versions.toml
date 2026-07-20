@@ -1,0 +1,25 @@
+[versions]
+agp = "8.7.3"
+kotlin = "2.3.20"
+compose-multiplatform = "1.11.1"
+ksp = "2.3.20-1.0.31"
+coroutines = "1.9.0"
+activity-compose = "1.9.3"
+stellar-sdk = "1.9.0"
+ktor = "3.3.2"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+stellar-sdk = { module = "com.soneso.stellar:stellar-sdk", version.ref = "stellar-sdk" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
