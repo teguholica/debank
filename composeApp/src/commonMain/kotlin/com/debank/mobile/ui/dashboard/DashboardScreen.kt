@@ -39,7 +39,8 @@ fun DashboardScreen(
     onSend: () -> Unit,
     onReceive: () -> Unit,
     onLogout: () -> Unit,
-    onHistory: () -> Unit
+    onHistory: () -> Unit,
+    onContacts: () -> Unit
 ) {
     var balance by remember { mutableStateOf<AccountBalance?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -120,6 +121,15 @@ fun DashboardScreen(
                     modifier = Modifier.fillMaxWidth(0.6f)
                 ) {
                     Text("Riwayat")
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = onContacts,
+                    modifier = Modifier.fillMaxWidth(0.6f)
+                ) {
+                    Text("Kontak")
                 }
 
                 Spacer(Modifier.height(12.dp))

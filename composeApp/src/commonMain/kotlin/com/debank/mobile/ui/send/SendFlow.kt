@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -54,10 +55,11 @@ fun SendFlow(
     secretSeed: String,
     onBack: () -> Unit,
     onSuccess: () -> Unit,
+    onPickContact: () -> Unit,
     prefilledAddress: String = ""
 ) {
     var step by remember { mutableStateOf<SendStep>(SendStep.Input) }
-    var address by remember { mutableStateOf(prefilledAddress) }
+    var address by remember(prefilledAddress) { mutableStateOf(prefilledAddress) }
     var amount by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var pinError by remember { mutableStateOf(false) }
@@ -107,16 +109,24 @@ fun SendFlow(
 
                     OutlinedTextField(
                         value = address,
-                        onValueChange = { if (prefilledAddress.isBlank()) { address = it; addressError = null } },
+                        onValueChange = { address = it; addressError = null },
                         label = { Text("Alamat Stellar tujuan") },
                         placeholder = { Text("G...") },
                         modifier = Modifier.fillMaxWidth(),
                         isError = addressError != null,
-                        enabled = prefilledAddress.isBlank(),
                         singleLine = true
                     )
                     addressError?.let {
                         Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = onPickContact,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Dari Kontak")
                     }
 
                     Spacer(Modifier.height(16.dp))
