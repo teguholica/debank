@@ -56,10 +56,7 @@ fun SendFlow(
     onSuccess: () -> Unit,
     prefilledAddress: String = ""
 ) {
-    var step by remember { mutableStateOf(
-        if (prefilledAddress.isNotBlank()) SendStep.Confirm(prefilledAddress, "")
-        else SendStep.Input
-    ) }
+    var step by remember { mutableStateOf<SendStep>(SendStep.Input) }
     var address by remember { mutableStateOf(prefilledAddress) }
     var amount by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }

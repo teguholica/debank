@@ -2,12 +2,12 @@ package com.debank.mobile.ui.receive
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.*
-import platform.CoreGraphics.CGRectMake
 import platform.UIKit.UIView
 import platform.darwin.NSObject
 
@@ -19,6 +19,14 @@ actual fun QrScannerView(
     modifier: Modifier
 ) {
     val session = remember { AVCaptureSession() }
+
+    LaunchedEffect(Unit) {
+        AVCaptureDevice.requestAccessForMediaType("vide") { granted ->
+            if (!granted) {
+                onError(IllegalStateException("Camera permission denied"))
+            }
+        }
+    }
 
     DisposableEffect(Unit) {
         session.startRunning()
@@ -51,7 +59,8 @@ actual fun QrScannerView(
                         fromConnection: AVCaptureConnection
                     ) {
                         didOutputMetadataObjects.forEach { obj ->
-                            val str = obj?.toString() ?: return@forEach
+                            val code = obj as? AVMetadataMachineReadableCodeObject
+                            val str = code?.stringValue ?: return@forEach
                             if (str.isNotBlank()) {
                                 onResult(str)
                             }
@@ -63,16 +72,18 @@ actual fun QrScannerView(
             @Suppress("UNCHECKED_CAST")
             metadataOutput.metadataObjectTypes = listOf("org.iso.QRCode" as Any)
 
+            val view = UIView()
             val previewLayer = AVCaptureVideoPreviewLayer.layerWithSession(session)
-            previewLayer.frame = CGRectMake(0.0, 0.0, 400.0, 400.0)
             previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
-
-            val view = UIView().apply {
-                layer.addSublayer(previewLayer)
-            }
+            previewLayer.frame = view.bounds
+            view.layer.addSublayer(previewLayer)
 
             view
         },
-        modifier = modifier
+        modifier = modifier,
+        update = { view ->
+            val previewLayer = view.layer.sublayers?.firstOrNull() as? AVCaptureVideoPreviewLayer
+            previewLayer?.frame = view.bounds
+        }
     )
 }

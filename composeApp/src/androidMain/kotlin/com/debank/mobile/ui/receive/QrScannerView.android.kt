@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Size
 import android.view.ViewGroup
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -12,7 +14,10 @@ import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -32,15 +37,28 @@ actual fun QrScannerView(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    var permissionRequested by remember { mutableStateOf(false) }
 
-    val hasCameraPermission = ContextCompat.checkSelfPermission(
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            onError(SecurityException("Camera permission denied"))
+        }
+    }
+
+    val hasPermission = ContextCompat.checkSelfPermission(
         context, Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
-    if (!hasCameraPermission) {
-        onError(SecurityException("Camera permission not granted"))
-        return
+    LaunchedEffect(Unit) {
+        if (!hasPermission && !permissionRequested) {
+            permissionRequested = true
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
     }
+
+    if (!hasPermission) return
 
     DisposableEffect(Unit) {
         onDispose { cameraExecutor.shutdown() }
@@ -80,10 +98,8 @@ actual fun QrScannerView(
                         barcodeScanner.process(inputImage)
                             .addOnSuccessListener { barcodes ->
                                 for (barcode in barcodes) {
-                                    if (barcode.valueType == Barcode.FORMAT_QR_CODE) {
-                                        barcode.rawValue?.let { value ->
-                                            onResult(value)
-                                        }
+                                    barcode.rawValue?.let { value ->
+                                        onResult(value)
                                     }
                                 }
                             }
